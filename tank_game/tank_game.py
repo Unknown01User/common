@@ -354,6 +354,8 @@ class Arena:
                     self._moveAim()
                     while (self.aim.getState() != "RUNNING"):
                         self._moveAim()
+                else:
+                    self.setDialog(self.tank.getState())
             elif (self.command == ' '):
                 self._shootTank()
                 if (self.tank.getState() == "WRONG SHOT"):

@@ -1,6 +1,8 @@
 import random
 import time
 import os
+import msvcrt
+import math
 from random import randint
 
 class Item():
@@ -10,7 +12,8 @@ class Item():
     _step = 1
     _shot = 1
     _direction ="north"
-    _dialWrongWay = ""
+    _state = ""
+    _name = ""
     def __init__(self, arena):
         self.arena = arena
     def getX(self):
@@ -25,6 +28,12 @@ class Item():
         self._xCord = x
     def setY(self, y):
         self._yCord = y
+    def getState(self):
+        return self._state
+    def setState(self, str):
+        self._state = self._state.replace(self._state, str)
+    def getName(self):
+        return self._name
 
     def isRightDirection(self, direction, item2):
         if (direction == 'w'):
@@ -72,7 +81,7 @@ class Item():
 
     def move(self, direction, item2):
         if (self.isRightDirection(direction, item2)):
-            self.arena.setDialog("ENTER THE COMMAND")
+            self.setState("RUNNING")
             if (direction == 'w'):
                 self._yCord -= self._step
                 self._direction = 'north'
@@ -94,41 +103,41 @@ class Item():
                 self._xCord += self._step
                 self._direction = 'north-east'
         else:
-            self.arena.setDialog(self._dialWrongWay)
+            self.setState("WRONG WAY")
 
     def shoot(self, bang):
         if (self._direction == 'north'):
             if (self._yCord - self._shot > 0):
                 bang.setY(self._yCord - self._shot)
             else:
-                self.arena.setDialog("WRONG SHOT")
+                self.setState("WRONG SHOT")
         elif (self._direction == 'south'):
             if (self._yCord + self._shot < self.arena.hight - 1):
                 bang.setY(self._yCord + self._shot)
             else:
-                self.arena.setDialog("WRONG SHOT")
+                self.setState("WRONG SHOT")
         elif (self._direction == 'west'):
             if (self._xCord - self._shot > 0):
                 bang.setX(self._xCord - self._shot)
             else:
-                self.arena.setDialog("WRONG SHOT")
+                self.setState("WRONG SHOT")
         elif (self._direction == 'east'):
             if (self._xCord + self._shot < self.arena.width - 1):
                 bang.setX(self._xCord + self._shot)
             else:
-                self.arena.setDialog("WRONG SHOT")
+                self.setState("WRONG SHOT")
         elif (self._direction == 'north-west'):
             if (self._yCord - self._shot > 0 and self._xCord - self._shot > 0):
                 bang.setY(self._yCord - self._shot)
                 bang.setX(self._xCord - self._shot)
             else:
-                self.arena.setDialog("WRONG SHOT")
+                self.setState("WRONG SHOT")
         elif (self._direction == 'north-east'):
             if (self._yCord - self._step > 0 and self._xCord + self._step < self.arena.width - 1):
                 bang.setY(self._yCord - self._step)
                 bang.setX(self._xCord + self._step)
             else:
-                self.arena.setDialog("WRONG SHOT")
+                self.setState("WRONG SHOT")
 
 
 class Bang:
@@ -150,13 +159,14 @@ class Bang:
 
 
 class Tank_T34(Item):
+    _name = "TANK T34"
     _cellSymb = "T"
     _step = 2
     _shot = 1
-    _dialWrongWay = "WRONG WAY"
 
 
 class Tank_Tiger(Item):
+    _name = "TANK TIGER"
     _cellSymb = "8"
     _step = 1
     _shot = 2
@@ -164,6 +174,7 @@ class Tank_Tiger(Item):
 
 
 class Aim (Item):
+    _name = "AIM"
     _cellSymb = "@"
     _step = 1
     _cellSymbAfterBang = "X"
@@ -171,11 +182,9 @@ class Aim (Item):
     def setCellSymb(self):
         self._cellSymb = self._cellSymbAfterBang
 
-
 class Arena:
     _emptyCell = ' '
     _borderCell = '#'
-
     hight = 0
     width = 0
     arena = []
@@ -183,8 +192,7 @@ class Arena:
     command = ""
     dialog = ""
     instruction = "The command-list:\n 'w' - up,\n 's' - down,\n 'a' - left,\n 'd' - right,\n 'q' - left-up," \
-                  "\n 'e' - right-up,\n space - shoot,\n 'exit' - end game"
-    shotStatus = ""
+                  "\n 'e' - right-up,\n space - shoot,\n 'n' - new game,\n 'x' - end game"
 
     def __init__(self, nHight, nWidth):
         self.hight = nHight+2
@@ -198,10 +206,10 @@ class Arena:
             self.arena[i][0] = self.arena[i][self.width - 1] = self._borderCell
             for j in range(1, (self.width - 1)):
                 self.arena[i][j] = self._emptyCell
-        if (self.typeTank == "1"):
-            self.tank = Tank_T34(self)
-        elif(self.typeTank == "2"):
+        if (self.typeTank == "2"):
             self.tank = Tank_Tiger(self)
+        else:
+            self.tank = Tank_T34(self)
         self.aim = Aim(self)
         self.bang = Bang(self.tank)
         self.setDialog("ENTER THE COMMAND")
@@ -226,7 +234,6 @@ class Arena:
         print("Shot cords: ",self.bang.getX(),self.bang.getY())
         print ("Direction: "+self.tank.getDir())
         print(self.dialog)
-        #print(self.instruction)
 
     def _locateTank(self):
         self.tank.setX(randint(1,self.width-2))
@@ -242,15 +249,12 @@ class Arena:
             self.aim.setY(randint(1, self.hight - 2))
 
     def _getCommand(self):
-        s = input()
+        # s = input()
+        s=msvcrt.getche().decode('utf-8')
         self.command = self.command.replace(self.command, s)
 
     def setDialog(self, str):
         self.dialog = self.dialog.replace(self.dialog, str)
-
-    def setShotStatus(self):
-        s = "Shot cords: "+str(self.bang.getX())+" "+str(self.bang.getY())
-        self.shotStatus = self.shotStatus.replace(self.shotStatus, s)
 
     def _moveTank(self):
         if (self.command == 'w'):
@@ -281,7 +285,7 @@ class Arena:
     def _checkShot(self):
         if (self.aim.getX() == self.bang.getX() and self.aim.getY() == self.bang.getY()):
             self.setDialog("HIT THE TARGET!")
-        else:
+        #else:
             self.setDialog("YOU ARE MISS")
 
 
@@ -302,8 +306,9 @@ class Arena:
         print("T34 - fast, but short-range : step=2, shot=1. Button for choice: 1")
         print("Tiger - long-range, but slow: step=1, shot=2. Button for choice: 2")
         print("Input number of the Tank")
-        str = input()
-        self.typeTank += str
+        #str = input()
+        s = msvcrt.getche().decode('utf-8')
+        self.typeTank = self.typeTank.replace(self.typeTank, s)
         print("LET THE FIGHT BEGIN")
 
 
@@ -316,6 +321,7 @@ class Arena:
         self._lokateAim()
         self._updateArena()
         self._printArena()
+        self._playGame()
 
     def _endGame(self):
         self.aim.setCellSymb()
@@ -323,35 +329,48 @@ class Arena:
         self._printArena()
         print("YOU ARE WINNER!!!")
 
+    def _missShot(self):
+        distance = round(math.sqrt(((self.tank.getX() - self.aim.getX()) ** 2) + ((self.tank.getY() - self.aim.getY()) ** 2)), 3)
+        return "miss! distance is = {d} kilometrs".format(d = distance)
 
-    def playGame(self):
+
+    def _playGame(self):
         while(True):
             self._getCommand()
-            if (self.command == 'exit'):
+            if (self.command == 'x'):
+                break
+            elif(self.command == 'n'):
+                self.startGame()
                 break
             elif (self.command == 'w' or self.command == 's'
                   or self.command == 'a' or self.command == 'd'
                   or self.command == 'q' or self.command == 'e'):
                 self._moveTank()
-                self._updateArena()
-                self._printArena()
-                time.sleep(1)
-                if (self.dialog != "WRONG WAY" and self.dialog != "WRONG SHOT"):
-                    self._moveAim()
+                if (self.tank.getState() != "WRONG WAY" and self.tank.getState() != "WRONG SHOT"):
+                    self.setDialog(self.tank.getState())
                     self._updateArena()
                     self._printArena()
+                    time.sleep(1)
+                    self._moveAim()
+                    while (self.aim.getState() != "RUNNING"):
+                        self._moveAim()
             elif (self.command == ' '):
                 self._shootTank()
-                if (self.dialog == "HIT THE TARGET!"):
-                    self._endGame()
-                    break
-                self._updateArena()
-                self._printArena()
+                if (self.tank.getState() == "WRONG SHOT"):
+                    self.setDialog(self.tank.getState())
+                else:
+                    if (self.dialog == "HIT THE TARGET!"):
+                        self._endGame()
+                        self._getCommand()
+                        self.startGame()
+                        break
+                    else:
+                        self.dialog = self._missShot()
             else:
                 self.setDialog("WRONG COMMAND")
-                self._printArena()
+            self._updateArena()
+            self._printArena()
 
 
 a = Arena(10,10)
 a.startGame()
-a.playGame()

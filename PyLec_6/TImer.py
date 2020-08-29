@@ -11,5 +11,6 @@ class Timer:
         print(f"it took {time.time() - Timer._begin:.3f} sec")
 
 
-with Timer():
-    some_list = list(range(1000000))
+if __name__ == "__main__":
+    with Timer():
+        some_list = list(range(1000000))

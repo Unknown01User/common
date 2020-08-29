@@ -8,13 +8,13 @@ def calculate_work_days(first_date, second_date):
     date_1 = datetime.strptime(first_date, "%d.%m.%Y")
     date_2 = datetime.strptime(second_date, "%d.%m.%Y")
     period = (date_2 - date_1).days
-    all_days = 0
+    work_days = 0
     for i in range(period + 1):
         day = date_1 + timedelta(i)
         print(i, day)
         if day.weekday() <= 4:
-            all_days += 1
-    return all_days
+            work_days += 1
+    return work_days
 
 
 print(calculate_work_days("24.08.2020", "30.08.2020"))
